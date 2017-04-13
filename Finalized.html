@@ -65,6 +65,25 @@
 <div id="sideBar"></div>
 <div id="can"></div>
 <div id="detail"></div>
+<svg width="1500" height="1500">
+    <defs>
+        <marker
+                id="arrow"
+                markerUnits="strokeWidth"
+                markerWidth="12"
+                markerHeight="12"
+                viewBox="0 0 12 12"
+                refX="6"
+                refY="6"
+                orient="auto">
+            <path d="M2,2 L10,6 L2,10 L6,6 L2,2" style="fill: #220721;"></path>
+        </marker>
+    </defs>
+
+    <!-- <line x1="0" y1="0" x2="200" y2="50"  stroke="red" stroke-width="2" marker-end="url(#arrow)"/> -->
+
+    <!-- <path d="M20,70 T80,100 T160,80 T200,90" fill="white" stroke="red" stroke-width="2" marker-start="url(#arrow)" marker-mid="url(#arrow)" marker-end="url(#arrow)"/> -->
+</svg>
 
 <body>
 <script>
@@ -148,7 +167,7 @@
                 .attr("rx", 15)
                 .attr("ry", 15);
 
-
+        /*
         canvas.selectAll("line")
                 .data(data[0].Children)
                 .enter()
@@ -167,8 +186,28 @@
                 })
                 .style ("stroke", "black")
                 .attr ("stroke-width", 2);
+                */
 
-        canvas.append()
+        canvas.selectAll("path")
+                .data(data[0].Children)
+                .enter()
+                .append("path")
+                .attr("d", function (d,i) {
+                    if ( ( (i + 1) % 7) == 0 && (i + 1) / 7 > 0 || i == numLayers - 1 ){
+                        //"M760,120 C785 120, 785 160, 760 160 H600 "
+                        return;
+                    } else {
+                        return "M" + (xCoord[i] + nodeWidth) + "," +(yCoord[i] + nodeWidth / 2) + "L" + xCoord[i + 1] +
+                                        "," + (yCoord[i + 1] + nodeWidth / 2);
+
+                    }
+                })
+                .attr("fill","white")
+                .attr("stroke","blue")
+                .attr("stroke-width",2)
+                .attr("marker-end","url(#arrow)");
+
+
 
 
 
