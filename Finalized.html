@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script type="text/javascript" src="https://d3js.org/d3.v4.js"></script>
+</head>
+<style>
+    #label {
+        width:800px;
+        height: 50px;
+        float: left;
+        border-style:   solid;
+        border-width:   2px;
+        border-color: rgba(0, 0, 0, 0.51);
+        text-align: center;
+
+
+    }
+
+    #sideBar {
+        width:300px;
+        min-height:500px;
+        left: 810px;
+        top: 0px;
+        position: fixed;
+        border-style:   solid;
+        border-width:   2px;
+        border-color: rgba(0, 0, 0, 0.51);
+
+    }
+    #can {
+        min-height:100px;
+        width:800px;
+        border-style :   solid;
+        border-width:   2px;
+        border-color: rgba(0, 0, 0, 0.51);
+        float: left;
+    }
+    #detail {
+        min-height:800px;
+        width:800px;
+        float: left;
+        clear: both;
+        border-style :   solid;
+        border-width:   2px;
+        border-color: rgba(0, 0, 0, 0.51);
+        font-weight: bold;
+    }
+
+    .labels{
+        font-weight: bold;
+        text-anchor: middle;
+    }
+    .nodes {
+        stroke: blue;
+        fill: #1a44de;
+        width: 60px;
+        height: 60px;
+        border-collapse: separate;
+    }
+
+</style>
+<div id="label"></div>
+<div id="sideBar"></div>
+<div id="can"></div>
+<div id="detail"></div>
+
+<body>
+<script>
+    var sideBarWidth = 300;
+    var sideBarHeight = 500;
+    var labelHeigth = 50;
+    var labelWidth = 800;
+    var canvasHeight = 100;
+    var canvasWidth = labelWidth;
+    var detailHeight = labelWidth;
+    var detailWidth = labelWidth;
+    var nodeWidth = 60;
+    var nodeSpace = 50;
+    var nodeMargin = 35;
+
+
+    var Margin = 25;//margin from all sides of panel
+    var XYsideBarImage = 250;// x and y value of images shown in side bar
+
+
+    var label = d3.select("body").select("#label").append("svg").attr("width", labelWidth).attr("height", labelHeigth);
+    var sideBar = d3.select("body").select("#sideBar").append("svg").attr("width", sideBarWidth).attr("height", sideBarHeight);
+    var canvas = d3.select("body").select("#can").append("svg").attr("width", canvasWidth).attr("height", canvasHeight);
+    var detail = d3.select("body").select("#detail").append("svg").attr("width", detailWidth).attr("height", detailHeight);
+    var myData;
+    var numLayers;
+    var numRows;
+    var rowHeight = 100;
+    var xCoord = new Array();
+    var yCoord = new Array();
+    var path = "http://localhost:8888/laskaactivations/";
+
+
+
+
+    d3.json("data.json", function(error, data) {
+
+        if (error) {  //If error is not null, something went wrong.
+            console.log(error);  //Log the error.
+        }
+
+        myData = data;
+        numLayers = String(myData[0].Children.length);
+
+        //All code for Labels Panel
+        //labels in label area "Network Name" + "Number of Layers"
+        label.selectAll("text")
+                .data([myData[0]])
+                .enter()
+                .append("text")
+                .attr("class", "labels")
+                .attr("x", (labelWidth / 2))
+                .attr("y", 30)
+                .text(function (d) {
+                    var tag1 = "Network Name: ";
+                    var tag2 = "Number of Layers: ";
+                    return tag1 + d.NetworkName +
+                            '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0' +
+                            '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0'+
+                            tag2 + String(numLayers); });
+
+        //All Code for Canvas panel
+
+        var numRows = Math.ceil(numLayers / 7);
+        canvasHeight = numRows * canvasHeight;
+        canvas.attr("height", canvasHeight);
+
+        canvas.selectAll("rect")
+                .data(data[0].Children)
+                .enter()
+                .append("rect")
+                .attr("class", "nodes")
+                .attr("x", function (d,i) {
+                    xCoord[i] = nodeMargin + (i % 7) * nodeWidth + (i % 7) * nodeSpace;
+                    return xCoord[i];
+                })
+                .attr("y", function (d,i) {
+                    yCoord[i] = Margin + Math.floor(i /  7) * rowHeight;
+                    return yCoord[i];
+                })
+                .attr("rx", 15)
+                .attr("ry", 15);
+
+
+        canvas.selectAll("line")
+                .data(data[0].Children)
+                .enter()
+                .append("line")
+                .attr("x1", function (d,i) {
+                    return xCoord[i] + nodeWidth;
+                })
+                .attr ("x2", function (d,i) {
+                    return xCoord[i + 1];
+                })
+                .attr("y1", function (d,i) {
+                    return yCoord[i] + nodeWidth / 2;
+                })
+                .attr ("y2", function (d,i) {
+                    return yCoord[i + 1] + nodeWidth / 2;
+                })
+                .style ("stroke", "black")
+                .attr ("stroke-width", 2);
+
+        canvas.append()
+
+
+
+
+
+
+
+
+        // add the input image to the sideBar
+        sideBar.append("svg:image")
+                .attr("class", "panel")
+                .attr("xlink:href",  function(d) { return path +"laska.png";})
+                .attr("x", Margin)
+                .attr("y", Margin)
+                .attr("height", XYsideBarImage)
+                .attr("width",  XYsideBarImage);
+
+        sideBar.append("text")
+                .attr("class", "labels")
+                .attr("x", sideBarWidth / 2)
+                .attr("y", Margin - 5)
+                .text("Input Image")
+                .attr("text-anchor", "middle");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    });
+
+
+
+</script>
+
+</body>
+</html>
