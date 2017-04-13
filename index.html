@@ -238,10 +238,7 @@
         var divideBy = Math.ceil( Math.sqrt(quantity) );//square of this number is the number of mini squares we have
         var widthBox = (width * 0.8)/divideBy;
         var yOffset = width - height;
-        var path = "http://localhost:8888/laskaback/";
-        //path = "http://localhost:8888/hoomanact1/";
-        //var path = "http://localhost:8888/guidedBackProp/";
-        //var path = "http://localhost:8888/activations1/";
+        var path = "http://35.163.48.45:8888/laskaback/";
 
         if (!d.Children){return}
         var exit = canvas.selectAll(".enter")
@@ -273,10 +270,10 @@
                     var temp = (document.getElementsByName("image")[0].href.baseVal).split("/");
                     temp = temp[temp.length - 2];
                     if(temp === 'laskaback'){
-                        path = "http://localhost:8888/laskaactivations/";
+                        path = "http://35.163.48.45:8888/laskaactivations/";
                     }
                     else{
-                        path = "http://localhost:8888/laskaback/";
+                        path = "http://35.163.48.45:8888/laskaback/";
                     }
 
                     canvas.selectAll(".filters")
@@ -297,10 +294,10 @@
                     var temp = (document.getElementsByName("image")[0].href.baseVal).split("/");
                     temp = temp[temp.length - 2];
                     if(temp === 'laskaback'){
-                        path = "http://localhost:8888/laskaactivations/";
+                        path = "http://35.163.48.45:8888/laskaactivations/";
                     }
                     else{
-                        path = "http://localhost:8888/laskaback/";
+                        path = "http://35.163.48.45:8888/laskaback/";
                     }
 
                     canvas.selectAll(".filters")
