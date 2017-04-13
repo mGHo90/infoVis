@@ -147,12 +147,14 @@
 
 
 
-
-        var rectEnter = rectGroup.data(d)
+        /************************************************
+        *******Individual rectangles on first page*******
+        *************************************************/
+        var rectangle = rectGroup.data(d)
                 .enter();
 
 
-        var appendix = rectEnter.append("rect")
+        var appendix = rectangle.append("rect")
                 .attr("class", "enter")
                 .attr("x", function (d, i) {
                     indx = i;
@@ -281,6 +283,10 @@
                     return;
                 });
 
+
+        /************************************************
+        *****************toggle button*******************
+        *************************************************/
         canvas.append("text")
                 .attr("class", "button")
                 .attr("x", (width - 30))
@@ -332,9 +338,10 @@
                 .on("click", down);
 
 
-        //var offScreen = d3.select(this).remove();
 
-
+        /************************************************
+        ********Individual images on second page*********
+        *************************************************/
         var nodeEnter = canvas.selectAll("img")
                 .data(d.Children)
                 .enter();
@@ -361,6 +368,8 @@
                     div.transition()
                             .duration(200)
                             .style("opacity", .9);
+
+                    //replacing the content of hover here
                     div	.html(shoop)
                             .style("left", leftshift + "px")
                             .style("top", d3.select(this).attr("y")  + "px");
@@ -370,9 +379,20 @@
                             .enter()
                             .append("svg:image")
                             .attr("class", "tooltip")
-                            .attr("xlink:href",  function(d) { return path + d.img;})
+                            .attr("xlink:href",  function(d) { return "http://35.163.48.45:8888/laskaback/" + d.img;})
                             .attr("x", width * 0.8 + widthBox*0.1)
                             .attr("y", 35 + (width * 0.2))
+                            .attr("height", (width * 0.2 - widthBox*0.1))
+                            .attr("width",  (width * 0.2 - widthBox*0.1));
+
+                    canvas.selectAll("img")
+                            .data([d])
+                            .enter()
+                            .append("svg:image")
+                            .attr("class", "tooltip")
+                            .attr("xlink:href",  function(d) { return "http://35.163.48.45:8888/laskaactivations/" + d.img;})
+                            .attr("x", width * 0.8 + widthBox*0.1)
+                            .attr("y", 235 + (width * 0.2))
                             .attr("height", (width * 0.2 - widthBox*0.1))
                             .attr("width",  (width * 0.2 - widthBox*0.1));
                 })
