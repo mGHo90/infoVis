@@ -14,9 +14,6 @@
         stroke: red;
     }
 
-    svg {
-        background-color: navy;
-    }
 
 
     rect.background {
@@ -37,10 +34,58 @@
     }
 
 
+
+
+    /*********d3-annotate********/
+
+    .d3-an-container .annotation {
+        cursor: move;
+    }
+    .d3-an-container .annotation.dragging {
+        cursor: grabbing;
+        cursor: -moz-grabbing;
+        cursor: -webkit-grabbing;
+        text-decoration: underline;
+    }
+    .d3-an-text-edit {
+        position: fixed;
+        top: 40px;
+        left: 40px;
+    }
+
+
 </style>
 
 <body>
 <script>
+    
+    /*
+    var myName = "{{tA_id}}";
+    var initOpts = {};
+    var formValues = JSON.parse(localStorage.getItem(myName)) || initOpts;
+    formValues["buttonText"] = $button.text();
+    localStorage.setItem(myName, JSON.stringify(formValues));
+
+    var anots = {};
+            .on("click", function (d) {
+                            //hshere
+                            //store annotations
+                            //anots[d.id] = 1;
+                            d.good = 1;
+                            //console.log(hsNodeName);
+                            //localStorage.setItem(hsNodeName, JSON.stringify(anots));
+                        })
+
+
+    var me = JSON.parse(localStorage.getItem(myName));
+    console.log(me);
+    onsole.log(myName);
+
+
+
+
+    */
+
 
 
     //button width and height
@@ -229,12 +274,33 @@
                         return yoffset+(bandScale.bandwidth() / 2);
                     }
                 })
-                .text(function (d) { return d.Name})
+                .text(function (d) {
+                    //hshere
+                    var count = 0;
+                    if(d.Children){
+                        d.Children.forEach(function(d) {
+                            if(d.good){
+                                count = count + d.good;
+                            }
+                        });
+                    }
+                    
+                    
+                    var k =  d.Name + ":" + count;
+                    return k;
+                })
                 .attr("text-anchor", "middle");
-
     }
 
+
+
+
+
+
     function inner (d, i) {
+
+        var hsNodeName = d.Name; //hashname the annotations are save with on clients 
+
         var path;
         var quantity = d.Children.length;
         var divideBy = Math.ceil( Math.sqrt(quantity) );//square of this number is the number of mini squares we have
@@ -259,6 +325,9 @@
 
 
         //adding buttons
+        /************************************************
+        *****boundary of filter boxes as button**********
+        *************************************************/
         canvas.append("rect")
                 .attr("class", "button")
                 .attr("x", (width - 60) )
@@ -314,7 +383,9 @@
                 });
 
 
-
+        /************************************************
+        *****boundary of filter boxes as button**********
+        *************************************************/
         canvas.append("rect")
                 .attr("class", "button")
                 .attr("x", width - 120)
@@ -350,7 +421,7 @@
         var filterEnter = nodeEnter.append("svg:image")
                 .attr("class", "filters")
                 .attr("name", "image")
-                .attr("xlink:href",  function(d) { console.log(d);return path + d.img;})
+                .attr("xlink:href",  function(d) { return path + d.img;})
                 .attr("x", function (d, i) { return (i%divideBy) * widthBox})
                 .attr("y", function (d, i) { return (Math.floor(i/divideBy) * widthBox )})
                 .attr("height", (widthBox - widthBox * 0.01))
@@ -404,10 +475,14 @@
                             .remove();
                 })
                 .on("click", function (d) {
-                    var url = path + d.img;
-                    // $(location).attr('href', url);
-                    return window.open(url);
+                    d.good = 1;
+                })
+                .on("dblclick", function (d) {
+                    //hshere
+                    //store annotations
+                    d.bad = 1;
                 });
+
 
 
         canvas.selectAll("img")
@@ -421,10 +496,10 @@
                 .attr("height", (width * 0.2 - widthBox*0.1))
                 .attr("width",  (width * 0.2 - widthBox*0.1));
 
-
-
     }
 
+
+ 
 
 
 
