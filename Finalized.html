@@ -14,8 +14,6 @@
         border-width:   2px;
         border-color: rgba(0, 0, 0, 0.51);
         text-align: center;
-
-
     }
 
     #sideBar {
@@ -53,18 +51,51 @@
         text-anchor: middle;
     }
     .nodes {
-        stroke: blue;
         fill: #1a44de;
+        opacity: 0.1;
         width: 60px;
         height: 60px;
         border-collapse: separate;
     }
+    .nodes:hover{
+        stroke: red;
+        fill : #ff876a;
+        stroke-width: 5px;
+    }
+    .lineArrows{
+        overflow: hidden;
+    }
+
+    .nodeLabels{
+        text-anchor: middle;
+        text-align: center;
+    }
+
 
 </style>
 <div id="label"></div>
 <div id="sideBar"></div>
 <div id="can"></div>
 <div id="detail"></div>
+<svg width="1500" height="1500">
+    <defs>
+        <marker
+                id="arrow"
+                markerUnits="strokeWidth"
+                markerWidth="12"
+                markerHeight="12"
+                viewBox="0 0 12 12"
+                refX="10"
+                refY="6"
+                orient="auto">
+            <path d="M2,2 L10,6 L2,10 L6,6 L2,2" style="fill: #220721;"></path>
+        </marker>
+    </defs>
+
+    <!-- <line x1="0" y1="0" x2="200" y2="50"  stroke="red" stroke-width="2" marker-end="url(#arrow)"/> -->
+
+    <!-- <path d="M20,70 T80,100 T160,80 T200,90" fill="white" stroke="red" stroke-width="2" marker-start="url(#arrow)" marker-mid="url(#arrow)" marker-end="url(#arrow)"/> -->
+</svg>
 
 <body>
 <script>
@@ -79,6 +110,7 @@
     var nodeWidth = 60;
     var nodeSpace = 50;
     var nodeMargin = 35;
+    var nodesPerRow = 7;// for square nodes of width nodeWidth=60 -> (canvas width - margins) / 60 = 7
 
 
     var Margin = 25;//margin from all sides of panel
@@ -109,7 +141,8 @@
         myData = data;
         numLayers = String(myData[0].Children.length);
 
-        //All code for Labels Panel
+        //*********************************-All code for Labels Panel-*********************************
+
         //labels in label area "Network Name" + "Number of Layers"
         label.selectAll("text")
                 .data([myData[0]])
@@ -126,11 +159,40 @@
                             '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0'+
                             tag2 + String(numLayers); });
 
-        //All Code for Canvas panel
+        //*********************************-All Code for Canvas panel-*********************************
 
-        var numRows = Math.ceil(numLayers / 7);
+        var numRows = Math.ceil(numLayers / nodesPerRow);
         canvasHeight = numRows * canvasHeight;
         canvas.attr("height", canvasHeight);
+        // Calculating the x , y coordinates of nodes to be drawng
+        for (index = 0; index < numLayers; index++){
+            xCoord[index] = nodeMargin + (index % nodesPerRow) * nodeWidth + (index % nodesPerRow) * nodeSpace;
+            yCoord[index] = Margin + Math.floor(index /  nodesPerRow) * rowHeight;
+        }
+
+        canvas.selectAll("path")
+                .data(data[0].Children)
+                .enter()
+                .append("path")
+                .attr("class", "lineArrows")
+                .attr("d", calculatePath)
+                .attr("fill","white")
+                .attr("stroke","blue")
+                .attr("stroke-width",2)
+                .attr("marker-end","url(#arrow)");
+
+        canvas.selectAll("text")
+                .data(data[0].Children)
+                .enter()
+                .append("text")
+                .attr("class", "nodeLabels")
+                .attr("x", function (d, i) {
+                    return xCoord[i] + (nodeWidth / 2);
+                })
+                .attr("y", function (d, i) {
+                    return yCoord[i] + (nodeWidth / 2);
+                })
+                .text(function (d) { return d.Name});
 
         canvas.selectAll("rect")
                 .data(data[0].Children)
@@ -138,44 +200,17 @@
                 .append("rect")
                 .attr("class", "nodes")
                 .attr("x", function (d,i) {
-                    xCoord[i] = nodeMargin + (i % 7) * nodeWidth + (i % 7) * nodeSpace;
                     return xCoord[i];
                 })
                 .attr("y", function (d,i) {
-                    yCoord[i] = Margin + Math.floor(i /  7) * rowHeight;
                     return yCoord[i];
                 })
                 .attr("rx", 15)
                 .attr("ry", 15);
 
 
-        canvas.selectAll("line")
-                .data(data[0].Children)
-                .enter()
-                .append("line")
-                .attr("x1", function (d,i) {
-                    return xCoord[i] + nodeWidth;
-                })
-                .attr ("x2", function (d,i) {
-                    return xCoord[i + 1];
-                })
-                .attr("y1", function (d,i) {
-                    return yCoord[i] + nodeWidth / 2;
-                })
-                .attr ("y2", function (d,i) {
-                    return yCoord[i + 1] + nodeWidth / 2;
-                })
-                .style ("stroke", "black")
-                .attr ("stroke-width", 2);
 
-        canvas.append()
-
-
-
-
-
-
-
+        //*********************************-All code for sideBar Panel-*********************************
 
         // add the input image to the sideBar
         sideBar.append("svg:image")
@@ -213,6 +248,30 @@
 
 
     });
+
+    function calculatePath (d, i) {
+        //dynamically calculating the path from one node to another
+        var arrowOffset = nodeWidth + nodeMargin/2;
+        if ( ( (i + 1) % 7) == 0 && (i + 1) / 7 > 0){
+            return ( "M" + (xCoord[i] + nodeWidth) + "," +(yCoord[i] + nodeWidth / 2) +
+            "C" + (xCoord[i] + nodeWidth + 20) + " " + (yCoord[i] + nodeWidth / 2) + "," +
+            (xCoord[i] + nodeWidth + 20) + " " + (arrowOffset + yCoord[i]) + "," +
+            (xCoord[i] + nodeWidth) + " " + (arrowOffset + yCoord[i]) +
+            "L" + nodeMargin + "," + (arrowOffset + yCoord[i]) +
+            "C" + nodeMargin / 2 + " " + (arrowOffset + yCoord[i]) + "," +
+            nodeMargin / 2 + " " + (80 + yCoord[i] + nodeWidth / 2) + ","+
+            (xCoord[i +1 ]) + " " +(yCoord[i +1 ] + nodeWidth / 2));
+
+        } else if ( i == numLayers - 1 ) {
+            return;
+
+        } else {
+            return ("M" + (xCoord[i] + nodeWidth) + "," +(yCoord[i] + nodeWidth / 2) +
+                    "L" + xCoord[i + 1] + "," + (yCoord[i + 1] + nodeWidth / 2));
+
+        }
+
+    }
 
 
 
