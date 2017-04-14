@@ -14,8 +14,6 @@
         border-width:   2px;
         border-color: rgba(0, 0, 0, 0.51);
         text-align: center;
-
-
     }
 
     #sideBar {
@@ -55,6 +53,7 @@
     .nodes {
         stroke: blue;
         fill: #1a44de;
+        opacity: 0.1;
         width: 60px;
         height: 60px;
         border-collapse: separate;
@@ -132,7 +131,8 @@
         myData = data;
         numLayers = String(myData[0].Children.length);
 
-        //All code for Labels Panel
+        //*********************************-All code for Labels Panel-*********************************
+
         //labels in label area "Network Name" + "Number of Layers"
         label.selectAll("text")
                 .data([myData[0]])
@@ -149,7 +149,7 @@
                             '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0'+
                             tag2 + String(numLayers); });
 
-        //All Code for Canvas panel
+        //*********************************-All Code for Canvas panel-*********************************
 
         var numRows = Math.ceil(numLayers / nodesPerRow);
         canvasHeight = numRows * canvasHeight;
@@ -185,6 +185,9 @@
                 .attr("rx", 15)
                 .attr("ry", 15);
 
+
+
+        //*********************************-All code for sideBar Panel-*********************************
 
         // add the input image to the sideBar
         sideBar.append("svg:image")
