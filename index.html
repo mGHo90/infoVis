@@ -14,6 +14,23 @@
         stroke: red;
     }
 
+    .axis text {
+  font: 10px sans-serif;
+}
+    .axis line,
+    .axis path {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+    }
+    .path-line {
+        fill: none;
+        stroke: yellow;
+        stroke-width: 1.5px;
+    }
+    svg {
+        background: #f0f0f0;
+    }
 
 
     rect.background {
@@ -68,7 +85,6 @@
 
     var anots = {};
             .on("click", function (d) {
-                            //hshere
                             //store annotations
                             //anots[d.id] = 1;
                             d.good = 1;
@@ -507,6 +523,77 @@
 
 
 </script>
+
+
+
+
+<div id='stacked-bar'></div>
+
+<script>
+var initStackedBarChart = {
+    draw: function(config) {
+        me = this,
+        domEle = config.element,
+        stackKey = config.key,
+        data = config.data,
+        margin = {top: 5, right: 0, bottom: 5, left: 5},
+        parseDate = d3.timeParse("%m/%Y"),
+        width = (60 * 0.9) - 5;
+        height = 30 - 5;
+        xScale = d3.scaleLinear().rangeRound([0, width]),
+        yScale = d3.scaleBand().rangeRound([height, 0]).padding(0.1),
+        color = d3.scaleOrdinal(d3.schemeCategory20),
+
+        svg = d3.select("#"+domEle).append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        var stack = d3.stack()
+            .keys(stackKey)
+            /*.order(d3.stackOrder)*/
+            .offset(d3.stackOffsetNone);
+    
+        var layers= stack(data);
+            //yScale.domain(data.map(function(d) { return parseDate(d.date); }));
+            xScale.domain([0, d3.max(layers[layers.length - 1], function(d) { return d[0] + d[1]; }) ]).nice();
+
+        var layer = svg.selectAll(".layer")
+            .data(layers)
+            .enter().append("g")
+            .attr("class", "layer")
+            .style("fill", function(d, i) { return color(i); });
+
+          layer.selectAll("rect")
+              .data(function(d) { return d; })
+            .enter().append("rect")
+              .attr("x", function(d) { return xScale(d[0]); })
+              .attr("height", height + margin.top + margin.bottom)
+              .attr("width", function(d) { return xScale(d[1]) - xScale(d[0]) });
+                          
+    }
+}
+var data = [{"disease":2761,"wounds":383,"other":324}];
+
+
+var key = ["wounds", "other", "disease"];
+initStackedBarChart.draw({
+    data: data,
+    key: key,
+    element: 'stacked-bar'
+});
+</script>
+
+
+
+
+
+
+
+
+
+
 </body>
 
 </html>
