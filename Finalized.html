@@ -59,6 +59,9 @@
         height: 60px;
         border-collapse: separate;
     }
+    .lineArrows{
+        overflow: hidden;
+    }
 
 </style>
 <div id="label"></div>
@@ -73,7 +76,7 @@
                 markerWidth="12"
                 markerHeight="12"
                 viewBox="0 0 12 12"
-                refX="6"
+                refX="10"
                 refY="6"
                 orient="auto">
             <path d="M2,2 L10,6 L2,10 L6,6 L2,2" style="fill: #220721;"></path>
@@ -98,6 +101,7 @@
     var nodeWidth = 60;
     var nodeSpace = 50;
     var nodeMargin = 35;
+    var nodesPerRow = 7;// for square nodes of width nodeWidth=60 -> (canvas width - margins) / 60 = 7
 
 
     var Margin = 25;//margin from all sides of panel
@@ -147,9 +151,25 @@
 
         //All Code for Canvas panel
 
-        var numRows = Math.ceil(numLayers / 7);
+        var numRows = Math.ceil(numLayers / nodesPerRow);
         canvasHeight = numRows * canvasHeight;
         canvas.attr("height", canvasHeight);
+        // Calculating the x , y coordinates of nodes to be drawng
+        for (index = 0; index < numLayers; index++){
+            xCoord[index] = nodeMargin + (index % nodesPerRow) * nodeWidth + (index % nodesPerRow) * nodeSpace;
+            yCoord[index] = Margin + Math.floor(index /  nodesPerRow) * rowHeight;
+        }
+
+        canvas.selectAll("path")
+                .data(data[0].Children)
+                .enter()
+                .append("path")
+                .attr("class", "lineArrows")
+                .attr("d", calculatePath)
+                .attr("fill","white")
+                .attr("stroke","blue")
+                .attr("stroke-width",2)
+                .attr("marker-end","url(#arrow)");
 
         canvas.selectAll("rect")
                 .data(data[0].Children)
@@ -157,63 +177,13 @@
                 .append("rect")
                 .attr("class", "nodes")
                 .attr("x", function (d,i) {
-                    xCoord[i] = nodeMargin + (i % 7) * nodeWidth + (i % 7) * nodeSpace;
                     return xCoord[i];
                 })
                 .attr("y", function (d,i) {
-                    yCoord[i] = Margin + Math.floor(i /  7) * rowHeight;
                     return yCoord[i];
                 })
                 .attr("rx", 15)
                 .attr("ry", 15);
-
-        /*
-        canvas.selectAll("line")
-                .data(data[0].Children)
-                .enter()
-                .append("line")
-                .attr("x1", function (d,i) {
-                    return xCoord[i] + nodeWidth;
-                })
-                .attr ("x2", function (d,i) {
-                    return xCoord[i + 1];
-                })
-                .attr("y1", function (d,i) {
-                    return yCoord[i] + nodeWidth / 2;
-                })
-                .attr ("y2", function (d,i) {
-                    return yCoord[i + 1] + nodeWidth / 2;
-                })
-                .style ("stroke", "black")
-                .attr ("stroke-width", 2);
-                */
-
-        canvas.selectAll("path")
-                .data(data[0].Children)
-                .enter()
-                .append("path")
-                .attr("d", function (d,i) {
-                    if ( ( (i + 1) % 7) == 0 && (i + 1) / 7 > 0 || i == numLayers - 1 ){
-                        //"M760,120 C785 120, 785 160, 760 160 H600 "
-                        return;
-                    } else {
-                        return "M" + (xCoord[i] + nodeWidth) + "," +(yCoord[i] + nodeWidth / 2) + "L" + xCoord[i + 1] +
-                                        "," + (yCoord[i + 1] + nodeWidth / 2);
-
-                    }
-                })
-                .attr("fill","white")
-                .attr("stroke","blue")
-                .attr("stroke-width",2)
-                .attr("marker-end","url(#arrow)");
-
-
-
-
-
-
-
-
 
 
         // add the input image to the sideBar
@@ -252,6 +222,30 @@
 
 
     });
+
+    function calculatePath (d, i) {
+        //dynamically calculating the path from one node to another
+        var arrowOffset = nodeWidth + 20;
+        if ( ( (i + 1) % 7) == 0 && (i + 1) / 7 > 0){
+            return ( "M" + (xCoord[i] + nodeWidth) + "," +(yCoord[i] + nodeWidth / 2) +
+            "C" + (xCoord[i] + nodeWidth + 20) + " " + (yCoord[i] + nodeWidth / 2) + "," +
+            (xCoord[i] + nodeWidth + 20) + " " + (arrowOffset + yCoord[i]) + "," +
+            (xCoord[i] + nodeWidth) + " " + (arrowOffset + yCoord[i]) +
+            "L" + nodeMargin + "," + (arrowOffset + yCoord[i]) +
+            "C" + nodeMargin / 2 + " " + (arrowOffset + yCoord[i]) + "," +
+            nodeMargin / 2 + " " + (80 + yCoord[i] + nodeWidth / 2) + ","+
+            (xCoord[i +1 ]) + " " +(yCoord[i +1 ] + nodeWidth / 2));
+
+        } else if ( i == numLayers - 1 ) {
+            return;
+
+        } else {
+            return ("M" + (xCoord[i] + nodeWidth) + "," +(yCoord[i] + nodeWidth / 2) +
+                    "L" + xCoord[i + 1] + "," + (yCoord[i + 1] + nodeWidth / 2));
+
+        }
+
+    }
 
 
 
