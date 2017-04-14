@@ -1,42 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <title>Title</title>
     <script type="text/javascript" src="https://d3js.org/d3.v4.js"></script>
 </head>
-
 <style>
-
-    text {
-        font: 15px sans-serif;
+    #label {
+        width:900px;
+        height: 50px;
+        float: left;
+        border-style:   solid;
+        border-width:   2px;
+        border-color: rgba(0, 0, 0, 0.51);
+        text-align: center;
     }
-
-    rect:hover{
+    #sideBar {
+        width:300px;
+        min-height:300px;
+        left: 910px;
+        top: 0px;
+        position: fixed;
+        border-style:   solid;
+        border-width:   2px;
+        border-color: rgba(0, 0, 0, 0.51);
+    }
+    #can {
+        min-height:100px;
+        width:900px;
+        border-style :   solid;
+        border-width:   2px;
+        border-color: rgba(0, 0, 0, 0.51);
+        float: left;
+    }
+    #detail {
+        min-height:800px;
+        width:900px;
+        float: left;
+        clear: both;
+        border-style :   solid;
+        border-width:   2px;
+        border-color: rgba(0, 0, 0, 0.51);
+        font-weight: bold;
+    }
+    .labels{
+        font-weight: bold;
+        text-anchor: middle;
+    }
+    .nodes {
+        fill: #1a44de;
+        opacity: 0.1;
+        border-collapse: separate;
+    }
+    .nodes:hover{
         stroke: red;
+        fill : #ff876a;
+        stroke-width: 5px;
     }
-
-    .axis text {
-  font: 10px sans-serif;
-}
-    .axis line,
-    .axis path {
-        fill: none;
-        stroke: #000;
-        shape-rendering: crispEdges;
+    .lineArrows{
+        overflow: hidden;
     }
-    .path-line {
-        fill: none;
-        stroke: yellow;
-        stroke-width: 1.5px;
+    .nodeLabels{
+        text-anchor: middle;
+        text-align: center;
     }
-    svg {
-        background: #f0f0f0;
+    .button{
     }
-
-
-    rect.background {
-        fill: white;
-    }
-
     div.tooltip {
         box-sizing: border-box;
         position: absolute;
@@ -49,248 +78,209 @@
         border-radius: 8px;
         pointer-events: none;
     }
-
-
-
-
-    /*********d3-annotate********/
-
-    .d3-an-container .annotation {
-        cursor: move;
-    }
-    .d3-an-container .annotation.dragging {
-        cursor: grabbing;
-        cursor: -moz-grabbing;
-        cursor: -webkit-grabbing;
-        text-decoration: underline;
-    }
-    .d3-an-text-edit {
-        position: fixed;
-        top: 40px;
-        left: 40px;
-    }
-
-
 </style>
+<div id="label"></div>
+<div id="sideBar"></div>
+<div id="can"></div>
+<div id="detail"></div>
+<svg width="1500" height="1500">
+    <defs>
+        <marker
+                id="arrow"
+                markerUnits="strokeWidth"
+                markerWidth="8"
+                markerHeight="12"
+                viewBox="0 0 12 12"
+                refX="10"
+                refY="6"
+                orient="auto">
+            <path d="M2,2 L10,6 L2,10 L6,6 L2,2" style="fill: #220721;"></path>
+        </marker>
+    </defs>
+
+    <!-- <line x1="0" y1="0" x2="200" y2="50"  stroke="red" stroke-width="2" marker-end="url(#arrow)"/> -->
+
+    <!-- <path d="M20,70 T80,100 T160,80 T200,90" fill="white" stroke="red" stroke-width="2" marker-start="url(#arrow)" marker-mid="url(#arrow)" marker-end="url(#arrow)"/> -->
+</svg>
 
 <body>
 <script>
-    
-    /*
-    var myName = "{{tA_id}}";
-    var initOpts = {};
-    var formValues = JSON.parse(localStorage.getItem(myName)) || initOpts;
-    formValues["buttonText"] = $button.text();
-    localStorage.setItem(myName, JSON.stringify(formValues));
-
-    var anots = {};
-            .on("click", function (d) {
-                            //store annotations
-                            //anots[d.id] = 1;
-                            d.good = 1;
-                            //console.log(hsNodeName);
-                            //localStorage.setItem(hsNodeName, JSON.stringify(anots));
-                        })
-
-
-    var me = JSON.parse(localStorage.getItem(myName));
-    console.log(me);
-    onsole.log(myName);
-
-
-
-
-    */
-
-
-
-    //button width and height
-    var bWidth= 40; //button width
-    var bHeight= 25; //button height
-    var bSpace= 10; //space between buttons
-    var x0= 20; //x offset
-    var y0= 10; //y offset
-
-    var width = 1000;
-    var height = 800;
-    var margin = 100;
-    var numOfLayers = 4;
-    var area_width  = 200;
-    var area_height = 200;
-    var yoffset = 50;
-    var myData;
-    var left_margin = right_margin = 10;
-    var bandScale = d3.scaleBand()
-            .range([0, 1000])
-            .padding(0.3);
-    var indx;
-    var arr = new Array();
+    var sideBarWidth = 300;
+    var sideBarHeight = 300;
+    var labelHeigth = 50;
+    var labelWidth = 900;
+    var canvasHeight = 100;
+    var canvasWidth = labelWidth;
+    var detailHeight = 910;
+    var detailWidth = labelWidth;
+    var nodeWidth = 60;
+    var nodeSpace = nodeWidth;
+    var nodesPerRow = 7;// for square nodes of width nodeWidth=60 -> (canvas width - margins) / 60 = 7
+    var nodeMargin = (canvasWidth - (nodesPerRow * nodeWidth) - ((nodesPerRow - 1) * nodeSpace)) / 2 ;
     var div = d3.select("body").append("div")
             .attr("class", "tooltip")
             .style("opacity", 0);
-    var visPath;
-    var path;
+    var Margin = 25;//margin from all sides of panel
+    var XYsideBarImage = 250;// x and y value of images shown in side bar
+    var label = d3.select("body").select("#label").append("svg").attr("width", labelWidth).attr("height", labelHeigth);
+    var sideBar = d3.select("body").select("#sideBar").append("svg").attr("width", sideBarWidth).attr("height", sideBarHeight);
+    var canvas = d3.select("body").select("#can").append("svg").attr("width", canvasWidth).attr("height", canvasHeight);
+    var detailForm = d3.select("body").select("#detail").append("form").attr("width", 900).attr("height", 50);
+    var detail = d3.select("body").select("#detail").append("svg").attr("width", detailWidth).attr("height", detailHeight);
+    var myData;
+    var numLayers;
+    var numRows;
+    var rowHeight = nodeWidth + (Margin * 2);
+    var xCoord = new Array();
+    var yCoord = new Array();
+    var path = "http://35.163.48.45:8888/laskaactivations/";
 
-
-
-
-
-
-    var spacing  = width / (numOfLayers + 1);
-
-    //console.log(myScale(1) - spacing);
-
-
-
-    var canvas = d3.select("body").append("svg")
-            .attr("width", width)
-            .attr("height", height);
-    //.append("g");
-
-    var back  = canvas.append("g")
-            .attr("class", "back")
-            .attr("fill", "white");
-
-    back.append("rect")
-            .attr("width", width)
-            .attr("height", height)
-            .on("click", down);
-
-
-
-    var GroupSelector = canvas.append("g");
-    var rectGroup = GroupSelector.selectAll("rect");
-
-
-    //GroupSelector.append("rect").attr("width",1000).attr("height", 1000).("background", "white").on("click", function(){console.log("fuck you");});
-
-
-    d3.json("laskaData.json", function(error, data) {
-
+    d3.json("data.json", function(error, data) {
         if (error) {  //If error is not null, something went wrong.
             console.log(error);  //Log the error.
-        } else {      //If no error, the file loaded correctly. Yay!
-            //console.log(data);//Log the data.
         }
-
         myData = data;
-        down(myData,0);
-
-
+        
+        draw(myData, 0);
     });
 
 
 
 
 
-    function down (d, i) {
-
-        if(!d){ d = myData}
-
-        bandScale.domain(myData
-                .filter(function(d,i) {
-                    return d.Name[d.Name.length -1] != myData[Math.abs(i-1)].Name[myData[Math.abs(i-1)].Name.length -1]; })
-                .map(function (d,i) {
-                    return d.Name;
-                }));
-        boxwidth = bandScale.bandwidth();
-
-        canvas.selectAll(".panel").remove();
-
-        canvas.selectAll(".button").remove();
-
-        var exitFilter = canvas.selectAll(".filters")
-                .attr("class", "exitFilters");
-
-
-        // Transition exiting bars to fade out.
-        var exitFilterTransition = exitFilter.remove();
 
 
 
-        /************************************************
-        *******Individual rectangles on first page*******
-        *************************************************/
-        var rectangle = rectGroup.data(d)
-                .enter();
-
-
-        var appendix = rectangle.append("rect")
-                .attr("class", "enter")
-                .attr("x", function (d, i) {
-                    indx = i;
-                    while(bandScale(myData[indx].Name) == null){
-                        indx--;
-                        arr[i] = indx;
-                    }
-                    //console.log(arr[0]);
-                    return bandScale(myData[indx].Name);})
-                .attr("y", function (d, i) {
-                    if(arr[i] != null){
-                        //console.log(Math.abs(arr[i]-i));
-                        return (yoffset+Math.abs(arr[i]-i) * bandScale.bandwidth() + Math.abs(arr[i]-i) * bandScale.bandwidth()*0.1);
-                    } else {
-                        return yoffset;
-                    }
-                })
-                .attr("rx", "15")
-                .attr("ry", "15")
-                .attr("id", function(d){ return d.id; })
-                .attr("height", function () { return bandScale.bandwidth(); })
-                .attr("width", function () {return bandScale.bandwidth();} )
-                .attr("fill", "white")
-                .attr("stroke", "blue")
-                .style("cursor", function(d) { return !d.Children ? null : "pointer"; })
-                .on("mouseover", function(d) {
-                    var shoop = JSON.stringify(d,["Name","FilterSize","Input", "Output", "InputSize", "NumChannels",
-                        "NumFilters", "Stride", "Padding", "WindowChannelSize", "Alpha", "Beta", "K", "PoolSize",
-                        "WeightLearnRateFactor", "WeightL2Factor", "BiasLearnRateFactor", "BiasL2Factor",
-                        "OutputSize", "LossFunction", "crossentropyex", "Probability"]);
-                    shoop = shoop.replace (/,"/g,"<br>");
-                    shoop = shoop.replace(/[{}]/g, "");
-                    shoop = shoop.replace(/"/g, "");
-                    shoop = shoop.replace(/:/g," : " );
-                    var leftshift = parseInt(d3.select(this).attr("x")) + boxwidth;
-                    leftshift = leftshift.toString()
-
-                    div.transition()
-                            .duration(200)
-                            .style("opacity", .9);
-                    div	.html(shoop)
-                            .style("left", leftshift + "px")
-                            .style("top", d3.select(this).attr("y")  + "px");
-                })
-                .on("mouseout", function(d) {
-                    div.transition()
-                            .duration(500)
-                            .style("opacity", 0);
-                })
-                .on("click", inner);
 
 
 
-        var labels = canvas.selectAll("text")
-                .data(d)
+
+
+
+
+    function draw(d, i){
+       numLayers = String(myData[0].Children.length);
+        for (index = 0; index <  numLayers; index++){
+            var node_ = myData[0].Children[index];
+            if(node_.Input == null){
+                var input = 0;
+                var output = 0;
+                switch (node_.Name.substring( 0 , 2 )){
+                    case 'co':
+                        if( node_.NumFilters.constructor === Array){
+                            for (n = 0; n < node_.NumFilters.length; n++ ){
+                                input = node_.NumChannels[n] + input;
+                                output = node_.NumFilters[n] + output;
+                            }
+                        } else {
+                            input = node_.NumChannels;
+                            output = node_.NumFilters;
+                        }
+                        node_.Input = input;
+                        node_.Output = output;
+                        break;
+                    case 're':
+                        var tempInd = index - 1 ;
+                        while ( myData[0].Children[tempInd].Output == null){
+                            tempInd --;
+                        }
+                        node_.Input = node_.Output = myData[0].Children[tempInd].Output;
+                        break;
+                    case 'no':
+                        var tempInd = index - 1 ;
+                        while ( myData[0].Children[tempInd].Input == null){
+                            tempInd --;
+                        }
+                        node_.Input = node_.Output = myData[0].Children[tempInd].Output;
+                        break;
+                    case 'po':
+                        var tempInd = index - 1 ;
+                        while ( myData[0].Children[tempInd].Input == null){
+                            tempInd --;
+                        }
+                        node_.Input = node_.Output = myData[0].Children[tempInd].Output;
+                        break;
+                    case 'dr':
+                        var tempInd = index - 1 ;
+                        while ( myData[0].Children[tempInd].Input == null){
+                            tempInd --;
+                        }
+                        node_.Input = node_.Output = myData[0].Children[tempInd].Output;
+                        break;
+                    case 'pr':
+                        var tempInd = index - 1 ;
+                        while ( myData[0].Children[tempInd].Input == null){
+                            tempInd --;
+                        }
+                        node_.Input = node_.Output = myData[0].Children[tempInd].Output;
+                        break;
+                    case 'ou':
+                        node_.Input = myData[0].Children[index -1].Output;
+                        break;
+                }
+            }
+        }
+
+
+
+
+        //*********************************-All code for Labels Panel-*********************************
+        //labels in label area "Network Name" + "Number of Layers"
+        label.selectAll("text")
+                .data([myData[0]])
                 .enter()
                 .append("text")
-                .attr("class", "enter")
-                .attr("x", function (d, i) {
-                    indx = i;
-                    while(bandScale(myData[indx].Name) == null){
-                        indx--;
-                        arr[i] = indx;
-                    }
-                    return bandScale(myData[indx].Name) + (bandScale.bandwidth() / 2) - (this.getBBox().width / 2);})
-                .attr("y", function (d, i) {
-                    if(arr[i] != null){
-                        return (yoffset+Math.abs(arr[i]-i) * bandScale.bandwidth()
-                        + Math.abs(arr[i]-i) * bandScale.bandwidth()*0.1
-                        +(bandScale.bandwidth() / 2));
-                    } else {
-                        return yoffset+(bandScale.bandwidth() / 2);
-                    }
-                })
+                .attr("class", "labels")
+                .attr("x", (labelWidth / 2))
+                .attr("y", 30)
                 .text(function (d) {
+                    var tag1 = "Network Name: ";
+                    var tag2 = "Number of Layers: ";
+                    return tag1 + d.NetworkName +
+                            '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0' +
+                            '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0'+
+                            tag2 + String(numLayers); });
+        //*********************************-All Code for Canvas panel-*********************************
+        
+
+
+
+        var numRows = Math.ceil(numLayers / nodesPerRow);
+        canvasHeight = numRows * rowHeight;
+        canvas.attr("height", canvasHeight);
+        // Calculating the x , y coordinates of nodes to be drawng
+        for (index = 0; index < numLayers; index++){
+            xCoord[index] = nodeMargin + (index % nodesPerRow) * nodeWidth + (index % nodesPerRow) * nodeSpace;
+            yCoord[index] = Margin + Math.floor(index /  nodesPerRow) * rowHeight;
+        }
+        canvas.append("g").selectAll("path")
+                .data(myData[0].Children.filter(function(d,i) {
+                    return d.Name != "output";
+                }))
+                .enter()
+                .append("path")
+                .attr("class", "lineArrows")
+                .attr("d", calculatePath)
+                .attr("fill","white")
+                .attr("stroke","blue")
+                .attr("stroke-width",2)
+                .attr("marker-end","url(#arrow)");
+
+
+
+        canvas.selectAll("text").remove();
+        canvas.append("g").selectAll("text")
+                .data(myData[0].Children)
+                .enter()
+                .append("text")
+                .attr("class", "nodeLabels")
+                .attr("x", function (d, i) {
+                    return xCoord[i] + (nodeWidth / 2);
+                })
+                .attr("y", function (d, i) {
+                    return yCoord[i] + (nodeWidth / 2);
+                })
+                .text(function (d) { 
                     //hshere
                     var count = 0;
                     if(d.Children){
@@ -304,7 +294,63 @@
                     
                     var k =  d.Name + ":" + count;
                     return k;
+                });
+        canvas.append("g").selectAll("rect")
+                .data(myData[0].Children)
+                .enter()
+                .append("rect")
+                .attr("class", "nodes")
+                .attr("x", function (d,i) {
+                    return xCoord[i];
                 })
+                .attr("y", function (d,i) {
+                    return yCoord[i];
+                })
+                .attr( "height", nodeWidth)
+                .attr( "width", nodeWidth)
+                .attr("rx", 15)
+                .attr("ry", 15)
+                .on("click", function (d) {
+                    d3.selectAll(".nodes").style("fill", "#1a44de");
+                    sideBar.selectAll(".layerInfo")
+                            .remove();
+                    d3.select(this).style("fill", "gray");
+                    sideBar.append("text")
+                            .attr("class", "layerInfo")
+                            .attr("x", 0)
+                            .attr("y", 2 * Margin + XYsideBarImage)
+                            .text("Selected Layer: " + d.Name);
+                    showDetail(d);
+                });
+        canvas.append("g").selectAll("text")
+                .data(myData[0].Children.filter(function(d,i) {
+                    return d.Name != "data";
+                    }))
+                .enter()
+                .append("text")
+                .attr("class", "pathLabels")
+                .attr("x", function (d, i) {
+                   return xCoord[i + 1] - (nodeSpace / 2);
+                })
+                .attr("y", function (d, i) {
+                    return yCoord[i + 1] + nodeWidth / 2 - 2;
+                })
+                .text(function (d) { return d.Input})
+                .attr("text-anchor", "middle");
+        //*********************************-All code for sideBar Panel-*********************************
+        // add the input image to the sideBar
+        sideBar.append("svg:image")
+                .attr("class", "panel")
+                .attr("xlink:href",  function(d) { return path +"laska.png";})
+                .attr("x", Margin)
+                .attr("y", Margin)
+                .attr("height", XYsideBarImage)
+                .attr("width",  XYsideBarImage);
+        sideBar.append("text")
+                .attr("class", "labels")
+                .attr("x", sideBarWidth / 2)
+                .attr("y", Margin - 5)
+                .text("Input Image")
                 .attr("text-anchor", "middle");
     }
 
@@ -313,287 +359,159 @@
 
 
 
-    function inner (d, i) {
 
-        var hsNodeName = d.Name; //hashname the annotations are save with on clients 
 
+
+
+
+
+
+
+    function showDetail(d,i) {
         var path;
-        var quantity = d.Children.length;
-        var divideBy = Math.ceil( Math.sqrt(quantity) );//square of this number is the number of mini squares we have
-        var widthBox = (width * 0.8)/divideBy;
-        var yOffset = width - height;
+        var numFilters = d.Children.length;
+        var filtersPerRow = Math.ceil( Math.sqrt(numFilters) );//square of this number is the number of mini squares we have
+        var filterWidth = detailWidth / filtersPerRow;
         var path = "http://35.163.48.45:8888/laskaback/";
-
-        if (!d.Children){return}
-        var exit = canvas.selectAll(".enter")
-                .attr("class", "exit");
-
-
-        // Transition exiting bars to fade out.
-        var exitTransition = exit.transition()
-                .duration(750)
-                .style("opacity", 1e-6)
+        sideBar.attr("height", sideBarHeight * 3 - 35);
+        if (!d.Children){return;}//DON'T Show anything if there is no filters
+        //remove all the buttons and filters in detail panel
+        detail.selectAll(".filters")
                 .remove();
-
-        div.transition()
-                .duration(500)
-                .style("opacity", 0);
-
-
-        //adding buttons
-        /************************************************
-        *****boundary of filter boxes as button**********
-        *************************************************/
-        canvas.append("rect")
+        detailForm.selectAll(".button")
+                .remove();
+        // add two radio buttons for each of the m
+        detailForm.append('label')
                 .attr("class", "button")
-                .attr("x", (width - 60) )
-                .attr("y", 0 )
-                .attr("rx", 5)
-                .attr("ry", 5 )
-                .attr("height", 30)
-                .attr("width",  60 * 0.9)
-                .attr("fill","navy")
-                .on("click", function () {
-                    var temp = (document.getElementsByName("image")[0].href.baseVal).split("/");
-                    temp = temp[temp.length - 2];
-                    if(temp === 'laskaback'){
-                        path = "http://35.163.48.45:8888/laskaactivations/";
-                    }
-                    else{
-                        path = "http://35.163.48.45:8888/laskaback/";
-                    }
-
-                    canvas.selectAll(".filters")
-                            .attr("xlink:href",  function(d) { return path + d.img;})
-                    return;
-                });
-
-
-        /************************************************
-        *****************toggle button*******************
-        *************************************************/
-        canvas.append("text")
+                .html('Guided Back Propagation');
+        detailForm.append('input')
                 .attr("class", "button")
-                .attr("x", (width - 30))
-                .attr("y", 15)
-                .attr("dy", ".35em")
-                .text("toggle")
-                .attr("text-anchor", "middle")
-                .style("cursor", "pointer")
-                .attr("fill", "white")
-                .on("click", function () {
-                    var temp = (document.getElementsByName("image")[0].href.baseVal).split("/");
-                    temp = temp[temp.length - 2];
-                    if(temp === 'laskaback'){
-                        path = "http://35.163.48.45:8888/laskaactivations/";
-                    }
-                    else{
-                        path = "http://35.163.48.45:8888/laskaback/";
-                    }
-
-                    canvas.selectAll(".filters")
+                .attr("checked", "checked")
+                .attr('type', 'radio')
+                .attr('name', 'toggle')
+                .on('click', function () {
+                    //Do something
+                    path = "http://35.163.48.45:8888/laskaback/";
+                    detail.selectAll(".filters")
                             .attr("xlink:href",  function(d) { return path + d.img;});
-
-                    return;
-
                 });
-
-
-        /************************************************
-        *****boundary of filter boxes as button**********
-        *************************************************/
-        canvas.append("rect")
+        detailForm.append('label')
                 .attr("class", "button")
-                .attr("x", width - 120)
-                .attr("y", 0 )
-                .attr("rx", 5)
-                .attr("ry", 5 )
-                .attr("height", 30)
-                .attr("width",  60 * 0.99)
-                .attr("fill","navy")
-                .on("click", down);
-
-        canvas.append("text")
+                .html('<br>Maximum Forward Activation');
+        detailForm.append('input')
                 .attr("class", "button")
-                .attr("x", (width - 90))
-                .attr("y", 15)
-                .attr("dy", ".35em")
-                .text("back")
-                .attr("text-anchor", "middle")
-                .style("cursor", "pointer")
-                .attr("fill", "white")
-                .on("click", down);
-
-
-
-        /************************************************
-        ********Individual images on second page*********
-        *************************************************/
-        var nodeEnter = canvas.selectAll("img")
+                .attr('type', 'radio')
+                .attr('name', 'toggle')
+                .on('click', function () {
+                    //Do something
+                    path = "http://35.163.48.45:8888/laskaactivations/";
+                    detail.selectAll(".filters")
+                            .attr("xlink:href",  function(d) { return path + d.img;});
+                });
+        detail.selectAll("img")
                 .data(d.Children)
-                .enter();
-
-
-        var filterEnter = nodeEnter.append("svg:image")
+                .enter()
+                .append("svg:image")
                 .attr("class", "filters")
                 .attr("name", "image")
                 .attr("xlink:href",  function(d) { return path + d.img;})
-                .attr("x", function (d, i) { return (i%divideBy) * widthBox})
-                .attr("y", function (d, i) { return (Math.floor(i/divideBy) * widthBox )})
-                .attr("height", (widthBox - widthBox * 0.01))
-                .attr("width",  (widthBox - widthBox * 0.01))
+                .attr("x", function (d, i) { return ( i % filtersPerRow) * filterWidth})
+                .attr("y", function (d, i) { return (10 + Math.floor( i / filtersPerRow) * filterWidth )})
+                .attr("height", (filterWidth - filterWidth * 0.01))
+                .attr("width",  (filterWidth - filterWidth * 0.01))
                 .attr("stroke-width", 2)
                 .attr("stroke", "white")
                 .on("mouseover", function(d) {
-                    var shoop = JSON.stringify(d, ["id"]);
-                    shoop = shoop.replace (/,"/g,"<br>");
-                    shoop = shoop.replace(/[{}]/g, "");
-                    shoop = shoop.replace(/"/g, "");
-                    shoop = shoop.replace(/:/g," : " );
-                    var leftshift = parseInt(d3.select(this).attr("x")) + boxwidth/2;
-                    leftshift = leftshift.toString()
-                    div.transition()
-                            .duration(200)
-                            .style("opacity", .9);
-
-                    //replacing the content of hover here
-                    div	.html(shoop)
-                            .style("left", leftshift + "px")
-                            .style("top", d3.select(this).attr("y")  + "px");
-                    //console.log(d);
-                    canvas.selectAll("img")
+                    var imageName = d.img;
+                    var filterID = d.id;
+                    sideBar.append("text")
+                            .attr("class", "tooltip")
+                            .attr("x", XYsideBarImage/2 + Margin)
+                            .attr("y", 2 * Margin + XYsideBarImage)
+                            .text("Selected Filter: " + d.id);
+                    sideBar.selectAll("img")
                             .data([d])
                             .enter()
                             .append("svg:image")
                             .attr("class", "tooltip")
-                            .attr("xlink:href",  function(d) { return "http://35.163.48.45:8888/laskaback/" + d.img;})
-                            .attr("x", width * 0.8 + widthBox*0.1)
-                            .attr("y", 35 + (width * 0.2))
-                            .attr("height", (width * 0.2 - widthBox*0.1))
-                            .attr("width",  (width * 0.2 - widthBox*0.1));
-
-                    canvas.selectAll("img")
-                            .data([d])
-                            .enter()
-                            .append("svg:image")
+                            .attr("xlink:href",  function(d) { return path + imageName;})
+                            .attr("x", Margin)
+                            .attr("y", XYsideBarImage + Margin * 3)
+                            .attr("height", XYsideBarImage)
+                            .attr("width",  XYsideBarImage);
+                    sideBar.append("svg:image")
                             .attr("class", "tooltip")
-                            .attr("xlink:href",  function(d) { return "http://35.163.48.45:8888/laskaactivations/" + d.img;})
-                            .attr("x", width * 0.8 + widthBox*0.1)
-                            .attr("y", 235 + (width * 0.2))
-                            .attr("height", (width * 0.2 - widthBox*0.1))
-                            .attr("width",  (width * 0.2 - widthBox*0.1));
+                            .attr("xlink:href",  function(d) {
+                                if(path == "http://35.163.48.45:8888/laskaback/"){
+                                    var path_ = "http://35.163.48.45:8888/laskaactivations/";
+                                } else {
+                                    path_ = "http://35.163.48.45:8888/laskaback/";
+                                }
+                                return path_ + imageName;})
+                            .attr("x", Margin)
+                            .attr("y", 2 * (XYsideBarImage) + 4 * Margin)
+                            .attr("height", XYsideBarImage)
+                            .attr("width",  XYsideBarImage);
                 })
                 .on("mouseout", function(d) {
                     div.transition()
                             .duration(500)
                             .style("opacity", 0);
-                    var offscreen = canvas.selectAll(".tooltip")
+                    var offscreen = sideBar.selectAll(".tooltip")
                             .remove();
                 })
                 .on("click", function (d) {
                     d.good = 1;
+
+                    if(d.bad){
+                        d.bad = 0;
+                    }
+
+                    draw(d);
                 })
                 .on("dblclick", function (d) {
                     //hshere
                     //store annotations
                     d.bad = 1;
+
+                    if(d.good){
+                        d.good=0;
+                    }
+
+                    draw(d);
                 });
-
-
-
-        canvas.selectAll("img")
-                .data([1])
-                .enter()
-                .append("svg:image")
-                .attr("class", "panel")
-                .attr("xlink:href",  function(d) { return path +"laska.png";})
-                .attr("x", width * 0.8 + widthBox*0.1)
-                .attr("y", 35)
-                .attr("height", (width * 0.2 - widthBox*0.1))
-                .attr("width",  (width * 0.2 - widthBox*0.1));
-
     }
 
 
- 
 
 
 
 
 
 
-</script>
 
 
 
 
-<div id='stacked-bar'></div>
 
-<script>
-var initStackedBarChart = {
-    draw: function(config) {
-        me = this,
-        domEle = config.element,
-        stackKey = config.key,
-        data = config.data,
-        margin = {top: 5, right: 0, bottom: 5, left: 5},
-        parseDate = d3.timeParse("%m/%Y"),
-        width = (60 * 0.9) - 5;
-        height = 30 - 5;
-        xScale = d3.scaleLinear().rangeRound([0, width]),
-        yScale = d3.scaleBand().rangeRound([height, 0]).padding(0.1),
-        color = d3.scaleOrdinal(d3.schemeCategory20),
-
-        svg = d3.select("#"+domEle).append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-        var stack = d3.stack()
-            .keys(stackKey)
-            /*.order(d3.stackOrder)*/
-            .offset(d3.stackOffsetNone);
-    
-        var layers= stack(data);
-            //yScale.domain(data.map(function(d) { return parseDate(d.date); }));
-            xScale.domain([0, d3.max(layers[layers.length - 1], function(d) { return d[0] + d[1]; }) ]).nice();
-
-        var layer = svg.selectAll(".layer")
-            .data(layers)
-            .enter().append("g")
-            .attr("class", "layer")
-            .style("fill", function(d, i) { return color(i); });
-
-          layer.selectAll("rect")
-              .data(function(d) { return d; })
-            .enter().append("rect")
-              .attr("x", function(d) { return xScale(d[0]); })
-              .attr("height", height + margin.top + margin.bottom)
-              .attr("width", function(d) { return xScale(d[1]) - xScale(d[0]) });
-                          
+    function calculatePath (d, i) {
+        //dynamically calculating the path from one node to another
+        var arrowOffset = nodeWidth + Margin;
+        if ( ( (i + 1) % nodesPerRow) == 0 && (i + 1) / nodesPerRow > 0){
+            return ( "M" + (xCoord[i] + nodeWidth) + "," +(yCoord[i] + nodeWidth / 2) +
+            "C" + (xCoord[i] + nodeWidth + nodeWidth / 3) + " " + (yCoord[i] + nodeWidth / 2) + "," +
+            (xCoord[i] + nodeWidth + nodeWidth / 3) + " " + (arrowOffset + yCoord[i]) + "," +
+            (xCoord[i] + nodeWidth) + " " + (arrowOffset + yCoord[i]) +
+            "L" + nodeMargin + "," + (arrowOffset + yCoord[i]) +
+            "C" + nodeMargin / 2 + " " + (arrowOffset + yCoord[i]) + "," +
+            nodeMargin / 2 + " " + (arrowOffset + yCoord[i] + nodeWidth / 2) + ","+
+            (xCoord[i +1 ]) + " " +(yCoord[i +1 ] + nodeWidth / 2));
+        }  else {
+            return ("M" + (xCoord[i] + nodeWidth) + "," +(yCoord[i] + nodeWidth / 2) +
+                    "L" + xCoord[i + 1] + "," + (yCoord[i + 1] + nodeWidth / 2));
+        }
     }
-}
-var data = [{"disease":2761,"wounds":383,"other":324}];
-
-
-var key = ["wounds", "other", "disease"];
-initStackedBarChart.draw({
-    data: data,
-    key: key,
-    element: 'stacked-bar'
-});
 </script>
-
-
-
-
-
-
-
-
-
 
 </body>
-
 </html>
