@@ -140,7 +140,7 @@
             console.log(error);  //Log the error.
         }
         myData = data;
-        
+
         draw(myData, 0);
     });
 
@@ -240,19 +240,24 @@
                             '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0' +
                             '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0'+
                             tag2 + String(numLayers); });
+
+
+
         //*********************************-All Code for Canvas panel-*********************************
-        
+
 
 
 
         var numRows = Math.ceil(numLayers / nodesPerRow);
         canvasHeight = numRows * rowHeight;
         canvas.attr("height", canvasHeight);
+
         // Calculating the x , y coordinates of nodes to be drawng
         for (index = 0; index < numLayers; index++){
             xCoord[index] = nodeMargin + (index % nodesPerRow) * nodeWidth + (index % nodesPerRow) * nodeSpace;
             yCoord[index] = Margin + Math.floor(index /  nodesPerRow) * rowHeight;
         }
+
         canvas.append("g").selectAll("path")
                 .data(myData[0].Children.filter(function(d,i) {
                     return d.Name != "output";
@@ -266,9 +271,8 @@
                 .attr("stroke-width",2)
                 .attr("marker-end","url(#arrow)");
 
-
-
         canvas.selectAll("text").remove();
+
         canvas.append("g").selectAll("text")
                 .data(myData[0].Children)
                 .enter()
@@ -280,7 +284,7 @@
                 .attr("y", function (d, i) {
                     return yCoord[i] + (nodeWidth / 2);
                 })
-                .text(function (d) { 
+                .text(function (d) {
                     //hshere
                     var count = 0;
                     if(d.Children){
@@ -290,11 +294,12 @@
                             }
                         });
                     }
-                    
-                    
+
+
                     var k =  d.Name + ":" + count;
                     return k;
                 });
+
         canvas.append("g").selectAll("rect")
                 .data(myData[0].Children)
                 .enter()
@@ -337,6 +342,8 @@
                 })
                 .text(function (d) { return d.Input})
                 .attr("text-anchor", "middle");
+
+
         //*********************************-All code for sideBar Panel-*********************************
         // add the input image to the sideBar
         sideBar.append("svg:image")
